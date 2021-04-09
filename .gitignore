@@ -1,0 +1,15 @@
+ar-lib 
+compile
+config.guess 
+config.sub 
+install-sh 
+missing 
+INSTALL 
+COPYING 
+depcomp
+aclocal.m4
+*.in
+**/Makefile
+configure
+*~
+.deps
