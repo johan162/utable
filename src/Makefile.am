@@ -45,7 +45,7 @@ unit-test: test_table
 	@echo " "
 	@echo "Unit tests:"
 	@echo "============================="
-	@(cd test; ./ut.sh)
+	@(cd test && ./ut.sh)
 	@echo ""
 
 .PHONY: unit-test
