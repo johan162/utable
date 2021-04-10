@@ -45,8 +45,9 @@ void ut1(void) {
     goto tbl_err;
 
   utable_set_title(tbl, "Table title", TITLESTYLE_LINE);
-  
   utable_stroke(tbl, STDOUT_FILENO, TSTYLE_DOUBLE_V4);
+  //utable_stroke(tbl, STDOUT_FILENO, TSTYLE_ASCII_V2);
+  
 
   return;
 

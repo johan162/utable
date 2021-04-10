@@ -1,0 +1,61 @@
+# Introduction libunitbl - Library
+
+libunitbl is a minor utility library that allows easy creation of tables in plain ASCII or
+using the extended ASCII special table drawing glyphs.
+
+An example of a table could be as shown below
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                            Table title                                           ║
+╟────────────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────╢
+║   Much longer tex  │    (0,1)   │    (0,2)   │    (0,3)   │    (0,4)   │    (0,5)   │    (0,6)   ║
+╟────────────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────╢
+║        (1,0)       │    (1,1)   │    (1,2)   │    (1,3)   │    (1,4)   │    (1,5)   │    (1,6)   ║
+╟────────────────────┼────────────┼────────────┴────────────┴────────────┼────────────┼────────────╢
+║        (2,0)       │    (2,1)   │                              (2,2)   │    (2,5)   │    (2,6)   ║
+╟────────────────────┼────────────┼────────────┬────────────┬────────────┼────────────┼────────────╢
+║        (3,0)       │    (3,1)   │    (3,2)   │    (3,3)   │    (3,4)   │    (3,5)   │    (3,6)   ║
+╟────────────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────╢
+║        (4,0)       │    (4,1)   │    (4,2)   │    (4,3)   │    (4,4)   │    (4,5)   │    (4,6)   ║
+╟────────────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────╢
+║        (5,0)       │    (5,1)   │    (5,2)   │    (5,3)   │    (5,4)   │    (5,5)   │    (5,6)   ║
+╟────────────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────╢
+║        (6,0)       │    (6,1)   │    (6,2)   │    (6,3)   │    (6,4)   │    (6,5)   │    (6,6)   ║
+╚════════════════════╧════════════╧════════════╧════════════╧════════════╧════════════╧════════════╝
+
+which is taken from one of the unit tests accompaning the library.
+
+To make using the library easy it comes with a hugh number of predefined themes which allows the
+look and feel of the table to be changed. For example the table above could by changing the theme
+to one of the plain ASCII themes (TSTYLE_ASCII_V2)  be changed to
+
++==================================================================================================+
+|                                            Table title                                           |
++--------------------+------------+------------+------------+------------+------------+------------+
+|   Much longer tex  |    (0,1)   |    (0,2)   |    (0,3)   |    (0,4)   |    (0,5)   |    (0,6)   |
++====================+============+============+============+============+============+============+
+|        (1,0)       |    (1,1)   |    (1,2)   |    (1,3)   |    (1,4)   |    (1,5)   |    (1,6)   |
++--------------------+------------+------------+------------+------------+------------+------------+
+|        (2,0)       |    (2,1)   |                              (2,2)   |    (2,5)   |    (2,6)   |
++--------------------+------------+------------+------------+------------+------------+------------+
+|        (3,0)       |    (3,1)   |    (3,2)   |    (3,3)   |    (3,4)   |    (3,5)   |    (3,6)   |
++--------------------+------------+------------+------------+------------+------------+------------+
+|        (4,0)       |    (4,1)   |    (4,2)   |    (4,3)   |    (4,4)   |    (4,5)   |    (4,6)   |
++--------------------+------------+------------+------------+------------+------------+------------+
+|        (5,0)       |    (5,1)   |    (5,2)   |    (5,3)   |    (5,4)   |    (5,5)   |    (5,6)   |
++--------------------+------------+------------+------------+------------+------------+------------+
+|        (6,0)       |    (6,1)   |    (6,2)   |    (6,3)   |    (6,4)   |    (6,5)   |    (6,6)   |
++====================+============+============+============+============+============+============+
+
+To allow for a poor-mans model-view separation it is possible to set a data callback for each cell
+that returns the value to be used in a specific table cell. The row and column number are passed
+as arguments to the callback to adjust the data returned. In order to distinguish for which table
+the callback is called from a third argument "tag" is passed into the callback. The tag is a
+"* void" pointer which can be set in the table and then passed on to the callback. It is up to
+the client of the library to choose a suitable tag. It can be something as a simple as just a
+pointer to a number (to differentiate different tables) or a handle to a data base connection for
+a specific table that is passed on and used in the callback.
+
+The library is built as a static library "libunitbl.a"
+
+
