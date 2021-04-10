@@ -26,8 +26,8 @@ endif
 # All sources
 test_table_SOURCES = test_table.c 
 
-    test_table_LDADD =  libunitbl/libunitbl.a
-    test_table_DEPENDENCIES= libunitbl/libunitbl.a
+test_table_LDADD =  libunitbl/libunitbl.a
+test_table_DEPENDENCIES= libunitbl/libunitbl.a
 
 # In Linux iconv() exists in glibc but in OSX we must add the iconv.dylib library to get that function
 if is_osx
@@ -40,4 +40,14 @@ endif
 DISTCLEANFILES=config.h
 
 CLEANFILES=*~ test_table 
+
+unit-test: test_table
+	@echo " "
+	@echo "Unit tests:"
+	@echo "============================="
+	@(cd test; ./ut.sh)
+	@echo ""
+
+.PHONY: unit-test
+
 

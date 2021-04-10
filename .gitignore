@@ -13,3 +13,11 @@ aclocal.m4
 configure
 *~
 .deps
+config.log
+config.status
+src/config.h
+*.o
+*.a
+**/stamp-h1
+test_table
+*cache
