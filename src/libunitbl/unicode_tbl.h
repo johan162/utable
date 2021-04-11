@@ -5,7 +5,7 @@
  *              formatted output to a terminal
  * Author:      Johan Persson (johan162@gmail.com)
  *
- * Copyright (C) 2015 Johan Persson
+ * Copyright (C) 2021 Johan Persson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ typedef enum {
 
 extern tblstyle_t table_styles[];
 
-#define NBR_TSTYLES 15
+#define NBR_TSTYLES 20
 
 /**
  * Buffer allocated when we stroke a table. This effectively limits the size of the
@@ -88,6 +88,29 @@ extern tblstyle_t table_styles[];
  */
 #define MAXSTROKEBUFF (1024*1024*10)
 
+/**
+ *
+ */
+typedef struct {
+  char *top_horizontal;
+  char *top_left, *top_right;
+  char *top_down;
+  char *top_middle_left, *top_middle_cross;
+  char *top_middle_horizontal;
+  char *top_middle_right;    
+  char *middle_left;    
+  char *middle_horizontal;
+  char *middle_right;
+  char *middle_horizontal_up;
+  char *middle_horizontal_down;
+  char *middle_cross;
+  char *middle_vertical;
+  char *border_vertical;
+  char *bottom_horizontal;
+  char *bottom_left, *bottom_right, *bottom_up;
+  int have_bottom_border;
+} style_t;
+  
 /**
  * Table title line style  
  */

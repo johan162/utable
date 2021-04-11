@@ -3,13 +3,9 @@
  * Description: Functions to create and write a rudimentary table
  *              using unicode page U+25xx characters for nicely
  *              formatted output to a terminal. 
- * Note:        If this file is compiled with TABLE_UNIT_TEST
- *              defined a small main() function is enabled and can be
- *              run separately as a kind of micro unit test.
- *              gcc -std=c99 -DTABLE_UNIT_TEST unicode_tbl.c
  * Author:      Johan Persson (johan162@gmail.com)
  *
- * Copyright (C) 2015 Johan Persson
+ * Copyright (C) 2021 Johan Persson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1123,6 +1119,273 @@ utable_stroke(table_t *t, int fd, tblstyle_t style) {
     return ret;
 }
 
+/**
+ * Internal helper function to set the table drawing characters to use
+ * in a particular style
+ * @param t	Table handle
+ * @param style Style to use
+ * @param sd	Data block that is filled with the chars to use
+ */
+static void
+_utable_get_style(table_t *t, tblstyle_t style, style_t *sd) {
+  sd->top_left = " ";
+  sd->top_horizontal = " ";
+  sd->top_down = " ";
+  sd->top_right = " ";
+  sd->top_middle_left = " ";
+  sd->top_middle_right = " ";
+  sd->top_middle_cross = " ";
+  sd->top_middle_horizontal = " ";
+  sd->middle_left = " ";
+  sd->middle_horizontal = " ";
+  sd->middle_right = " ";
+  sd->middle_horizontal_up = " ";
+  sd->middle_horizontal_down = " ";
+  sd->middle_cross = " ";
+  sd->middle_vertical = " ";
+  sd->border_vertical = " ";
+  sd->bottom_left = " ";
+  sd->bottom_horizontal = " ";
+  sd->bottom_right = " ";
+  sd->bottom_up = " ";
+  sd->have_bottom_border  = TRUE;
+      
+    if ( style == TSTYLE_ASCII_V0 || style == TSTYLE_ASCII_V4 ) {        
+        sd->top_middle_horizontal = "=";
+        sd->top_middle_cross = "+";
+        sd->middle_vertical = "|";
+        sd->bottom_horizontal = "-";
+        sd->bottom_up = "+";
+        sd->bottom_left = sd->bottom_horizontal;
+        sd->bottom_right = sd->bottom_horizontal;
+        sd->top_middle_left = sd->top_middle_horizontal;
+        sd->top_middle_right = sd->top_middle_horizontal;
+        
+        if( style == TSTYLE_ASCII_V0 )
+            sd->have_bottom_border = FALSE;
+        
+    } else if (style == TSTYLE_ASCII_V2 || style == TSTYLE_ASCII_V1 || style == TSTYLE_ASCII_V3 ) {
+        // The very top outer border line
+        sd->top_horizontal = style==TSTYLE_ASCII_V3 ? "-" : "=";
+        sd->top_down = "+";
+        
+        // The very bottom outer border line
+        sd->bottom_horizontal = sd->top_horizontal;
+        sd->bottom_up = "+";
+                
+        // The four corners
+        sd->top_left = style == TSTYLE_ASCII_V2 ? "+" : sd->top_horizontal;
+        sd->top_right = style == TSTYLE_ASCII_V2 ? "+" : sd->top_horizontal;
+        sd->bottom_left = style == TSTYLE_ASCII_V2 ? "+" : sd->bottom_horizontal;
+        sd->bottom_right = style == TSTYLE_ASCII_V2 ? "+" : sd->bottom_horizontal;
+
+        // The line below the header row, just before the data rows
+        sd->top_middle_left = style == TSTYLE_ASCII_V2 ? "+" : sd->top_horizontal;
+        sd->top_middle_right = style == TSTYLE_ASCII_V2 ? "+" : sd->top_horizontal;
+        sd->top_middle_cross = "+";
+        sd->top_middle_horizontal = sd->top_horizontal;
+        
+        // The interior horizontal line (also used for line below the title)
+        sd->middle_horizontal = "-";
+        
+        // Interior vertical
+        sd->middle_vertical = "|";
+        
+        // The vertical outer border
+        sd->border_vertical = style == TSTYLE_ASCII_V2 ? "|" : " ";
+        
+        // The connection to the lefty and right border for interior lines
+        sd->middle_left = style == TSTYLE_ASCII_V2 ? "+" : sd->middle_horizontal;
+        sd->middle_right = style == TSTYLE_ASCII_V2 ? "+" : sd->middle_horizontal;
+        
+        // Connection for interior lines
+        sd->middle_horizontal_up = "+";
+        sd->middle_horizontal_down = "+";
+        sd->middle_cross = "+";
+                
+    } else if (style == TSTYLE_DOUBLE_V1 || style == TSTYLE_DOUBLE_V2 || 
+               style == TSTYLE_DOUBLE_V3 || style==TSTYLE_DOUBLE_V4 ) {
+        // The very top outer border line
+        sd->top_horizontal = BDL_DH_H;
+        sd->top_down = BDL_DH_DH;
+
+        // The very bottom outer border line
+        sd->bottom_horizontal = BDL_DH_H;
+        sd->bottom_up = BDL_DH_UH;
+        
+        // The four corners
+        sd->top_left =      (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DL_DR : 
+                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_DR : sd->top_horizontal;
+        sd->top_right =     (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_DL : 
+                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_DL : sd->top_horizontal;
+        sd->bottom_left =   (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_UR : 
+                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_UR : sd->bottom_horizontal;
+        sd->bottom_right =  (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_UL : 
+                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_UL : sd->bottom_horizontal;        
+                
+        // The line below the header row, just before the data rows
+        // This is set to be the same as the border style
+        sd->top_middle_left =  style==TSTYLE_DOUBLE_V2 ? BDL_DL_VR : 
+                            style==TSTYLE_DOUBLE_V3 ? BDL_DH_VR : sd->top_horizontal;
+        sd->top_middle_right = style==TSTYLE_DOUBLE_V2 ? BDL_DL_VL : 
+                            style==TSTYLE_DOUBLE_V3 ? BDL_DH_VL : sd->top_horizontal;
+        sd->top_middle_cross = BDL_DH_X;  
+        sd->top_middle_horizontal = sd->top_horizontal;
+                
+        // The vertical outer border
+        sd->border_vertical =   (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DL_V : 
+                             style==TSTYLE_DOUBLE_V3 ? BDL_V : " ";
+        
+        // The interior horizontal line (also used for line below the title)
+        sd->middle_horizontal = BDL_H;
+
+        // Interior vertical
+        sd->middle_vertical = BDL_V ;               
+
+        // The connection to the lefty and right border for interior lines
+        sd->middle_left = (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DV_VR : 
+                        style == TSTYLE_DOUBLE_V3 ? BDL_VR : sd->middle_horizontal;
+        sd->middle_right = (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DV_VL : 
+                        style == TSTYLE_DOUBLE_V3 ? BDL_VL : sd->middle_horizontal;
+
+        
+        // Connection for interior lines
+        sd->middle_horizontal_up = BDL_UH;
+        sd->middle_horizontal_down = BDL_DH;
+        sd->middle_cross = BDL_X;
+        
+        if( style==TSTYLE_DOUBLE_V4 ) {
+            // Just a thick border around no special treatment of top row
+            sd->top_middle_left = sd->middle_left;  
+            sd->top_middle_right = sd->middle_right; 
+            sd->top_middle_cross = sd->middle_cross;
+            sd->top_middle_horizontal = sd->middle_horizontal;
+        }                
+
+    } else if( style==TSTYLE_SINGLE_V1 || style==TSTYLE_SINGLE_V2 ) {
+        
+        // The very top outer border line
+        sd->top_horizontal = BDL_H;
+        sd->top_down = BDL_DH;
+
+        // The very bottom outer border line
+        sd->bottom_horizontal = sd->top_horizontal;
+        sd->bottom_up = BDL_UH;
+        
+        // The four corners
+        sd->top_left =      style == TSTYLE_SINGLE_V2 ? BDL_DR : sd->top_horizontal;
+        sd->top_right =     style == TSTYLE_SINGLE_V2 ? BDL_DL : sd->top_horizontal;
+        sd->bottom_left =   style == TSTYLE_SINGLE_V2 ? BDL_UR : sd->top_horizontal;
+        sd->bottom_right =  style == TSTYLE_SINGLE_V2 ? BDL_UL : sd->top_horizontal;
+                
+        // The line below the header row, just before the data rows
+        // This is set to be the same as the border style
+        sd->top_middle_left =  style == TSTYLE_SINGLE_V2 ? BDL_VR : sd->top_horizontal;
+        sd->top_middle_right = style == TSTYLE_SINGLE_V2 ? BDL_VL : sd->top_horizontal;
+        sd->top_middle_cross = BDL_X;
+        sd->top_middle_horizontal = sd->top_horizontal;
+
+        // The vertical outer border
+        sd->border_vertical = style == TSTYLE_SINGLE_V2 ? BDL_V : " "; 
+        
+        // The interior horizontal line (also used for line below the title)
+        sd->middle_horizontal = BDL_H;
+
+        // Interior vertical
+        sd->middle_vertical = BDL_V ;
+
+        // The connection to the lefty and right border for interior lines
+        sd->middle_left  = style == TSTYLE_SINGLE_V2 ? BDL_VR : sd->middle_horizontal;
+        sd->middle_right = style == TSTYLE_SINGLE_V2 ? BDL_VL : sd->middle_horizontal;
+
+        // Connection for interior lines
+        sd->middle_horizontal_up = BDL_UH;
+        sd->middle_horizontal_down = BDL_DH;
+        sd->middle_cross = BDL_X;
+        
+} else if( style==TSTYLE_HEAVY_V1 || style==TSTYLE_HEAVY_V2 || style==TSTYLE_HEAVY_V3 ) {
+        
+        // The very top outer border line
+        sd->top_horizontal = BDL_HB_H;
+        sd->top_down = BDL_HB_DH;
+
+        // The very bottom outer border line
+        sd->bottom_horizontal = sd->top_horizontal;
+        sd->bottom_up = BDL_HB_UH;
+        
+        // The four corners
+        sd->top_left =      style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : BDL_HB_DR;
+        sd->top_right =     style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : BDL_HB_DL;
+        sd->bottom_left =   style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : BDL_HB_UR;
+        sd->bottom_right =  style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : BDL_HB_UL;
+                
+        // The line below the header row, just before the data rows
+        // This is set to be the same as the border style
+        sd->top_middle_left =  style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : style == TSTYLE_HEAVY_V2 ? BDL_HL_VR : BDL_HB_VR;
+        sd->top_middle_right = style == TSTYLE_HEAVY_V1 ? sd->top_horizontal : style == TSTYLE_HEAVY_V2 ? BDL_HL_VL : BDL_HB_VL;
+        sd->top_middle_cross = style == TSTYLE_HEAVY_V3 ? BDL_X : BDL_HB_X ;
+        sd->top_middle_horizontal = style == TSTYLE_HEAVY_V3 ? BDL_H : sd->top_horizontal ;
+
+        // The vertical outer border
+        sd->border_vertical = style == TSTYLE_HEAVY_V1 ? " " : BDL_HB_V ; 
+        
+        // The interior horizontal line (also used for line below the title)
+        sd->middle_horizontal = BDL_H;
+
+        // Interior vertical
+        sd->middle_vertical = BDL_V ;
+
+        // The connection to the lefty and right border for interior lines
+        sd->middle_left  = style == TSTYLE_HEAVY_V1 ? sd->middle_horizontal : BDL_HB_VR ;
+        sd->middle_right = style == TSTYLE_HEAVY_V1 ? sd->middle_horizontal : BDL_HB_VL ;
+
+        // Connection for interior lines
+        sd->middle_horizontal_up = BDL_UH;
+        sd->middle_horizontal_down = BDL_DH;
+        sd->middle_cross = BDL_X;
+                        
+    } else if( style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 || 
+               style==TSTYLE_SIMPLE_V4 || style==TSTYLE_SIMPLE_V5 || style==TSTYLE_SIMPLE_V6 )  {
+        
+        if( style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 )
+            sd->have_bottom_border = FALSE;
+        
+        sd->top_left = " ";
+        sd->top_horizontal = " ";
+        sd->top_down = " ";
+        sd->top_right = " ";
+        sd->top_middle_left = " ";
+        sd->top_middle_right = " ";
+        sd->top_middle_cross = style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V5 ? BDL_HB_X : style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V4 ? BDL_X : BDL_DH_X;;
+        sd->top_middle_horizontal = style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V5 ? BDL_HB_H : style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V4 ? BDL_H : BDL_DL_H;
+        sd->middle_left = " ";
+        sd->middle_horizontal = " ";
+        sd->middle_right = " ";
+        sd->middle_horizontal_up = " ";
+        sd->middle_horizontal_down = " ";
+        sd->middle_cross = " ";
+        sd->middle_vertical = BDL_V;
+        sd->border_vertical = " ";
+        sd->bottom_left = " ";
+        sd->bottom_horizontal = style==TSTYLE_SIMPLE_V4 || style==TSTYLE_SIMPLE_V5 || style==TSTYLE_SIMPLE_V6 ?  BDL_H : " ";
+        sd->bottom_right = " ";
+        sd->bottom_up = style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 ? BDL_V : BDL_UH;
+        
+    }
+    
+    if( ! t->interior_v ) {
+        sd->top_down = sd->top_horizontal;
+        sd->top_middle_cross = sd->top_middle_horizontal;
+        sd->bottom_up = sd->bottom_horizontal;                
+        sd->middle_vertical = " ";        
+        sd->middle_horizontal_up = sd->middle_horizontal;
+        sd->middle_horizontal_down = sd->middle_horizontal;
+        sd->middle_cross = sd->middle_horizontal;   
+    }
+
+}
+
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstack-protector"
 
@@ -1151,318 +1414,51 @@ utable_strstroke(table_t *t, char *buff, size_t bufflen, tblstyle_t style) {
             utable_set_cell_colspan(t, 0, 0, t->nCol);
             t->nRow++;
             t->titleCopied = TRUE;
-        } else {
+        } else { 
             free(t->c[0].t);
             t->c[0].t = strdup(t->title);
-        }
-    }
-
+        } 
+    } 
+ 
     // Get the total width of the table in characters
     size_t totwidth = 0;
-    for (size_t i = 0; i < t->nCol; i++)
+    for (size_t i = 0; i < t->nCol; i++)  
         totwidth += t->colwidth[i] + 1;
     
     if( 0==totwidth )
         return -1;
-    
+
+    /* The eval is used to evaluate markers on the table */
     int eval[totwidth];
 
-    char *top_horizontal;
-    char *top_left, *top_right;
-    char *top_down;
-    char *top_middle_left, *top_middle_cross;
-    char *top_middle_horizontal;
-    char *top_middle_right;    
-    char *middle_left;    
-    char *middle_horizontal;
-    char *middle_right;
-    char *middle_horizontal_up;
-    char *middle_horizontal_down;
-    char *middle_cross;
-    char *middle_vertical;
-    char *border_vertical;
-    char *bottom_horizontal;
-    char *bottom_left, *bottom_right, *bottom_up;
-    int have_bottom_border = TRUE;
+    /* Get characters to use for this style into style data (sd)*/ 
+    style_t sd;
+    _utable_get_style(t, style, &sd);
     
-    top_left = " ";
-    top_horizontal = " ";
-    top_down = " ";
-    top_right = " ";
-    top_middle_left = " ";
-    top_middle_right = " ";
-    top_middle_cross = " ";
-    top_middle_horizontal = " ";
-    middle_left = " ";
-    middle_horizontal = " ";
-    middle_right = " ";
-    middle_horizontal_up = " ";
-    middle_horizontal_down = " ";
-    middle_cross = " ";
-    middle_vertical = " ";
-    border_vertical = " ";
-    bottom_left = " ";
-    bottom_horizontal = " ";
-    bottom_right = " ";
-    bottom_up = " ";
-    
-    if ( style == TSTYLE_ASCII_V0 || style == TSTYLE_ASCII_V4 ) {        
-        top_middle_horizontal = "=";
-        top_middle_cross = "+";
-        middle_vertical = "|";
-        bottom_horizontal = "-";
-        bottom_up = "+";
-        bottom_left = bottom_horizontal;
-        bottom_right = bottom_horizontal;
-        top_middle_left = top_middle_horizontal;
-        top_middle_right = top_middle_horizontal;
-        
-        if( style == TSTYLE_ASCII_V0 )
-            have_bottom_border = FALSE;
-        
-    } else if (style == TSTYLE_ASCII_V2 || style == TSTYLE_ASCII_V1 || style == TSTYLE_ASCII_V3 ) {
-        // The very top outer border line
-        top_horizontal = style==TSTYLE_ASCII_V3 ? "-" : "=";
-        top_down = "+";
-        
-        // The very bottom outer border line
-        bottom_horizontal = top_horizontal;
-        bottom_up = "+";
-                
-        // The four corners
-        top_left = style == TSTYLE_ASCII_V2 ? "+" : top_horizontal;
-        top_right = style == TSTYLE_ASCII_V2 ? "+" : top_horizontal;
-        bottom_left = style == TSTYLE_ASCII_V2 ? "+" : bottom_horizontal;
-        bottom_right = style == TSTYLE_ASCII_V2 ? "+" : bottom_horizontal;
-
-        // The line below the header row, just before the data rows
-        top_middle_left = style == TSTYLE_ASCII_V2 ? "+" : top_horizontal;
-        top_middle_right = style == TSTYLE_ASCII_V2 ? "+" : top_horizontal;
-        top_middle_cross = "+";
-        top_middle_horizontal = top_horizontal;
-        
-        // The interior horizontal line (also used for line below the title)
-        middle_horizontal = "-";
-        
-        // Interior vertical
-        middle_vertical = "|";
-        
-        // The vertical outer border
-        border_vertical = style == TSTYLE_ASCII_V2 ? "|" : " ";
-        
-        // The connection to the lefty and right border for interior lines
-        middle_left = style == TSTYLE_ASCII_V2 ? "+" : middle_horizontal;
-        middle_right = style == TSTYLE_ASCII_V2 ? "+" : middle_horizontal;
-        
-        // Connection for interior lines
-        middle_horizontal_up = "+";
-        middle_horizontal_down = "+";
-        middle_cross = "+";
-                
-    } else if (style == TSTYLE_DOUBLE_V1 || style == TSTYLE_DOUBLE_V2 || 
-               style == TSTYLE_DOUBLE_V3 || style==TSTYLE_DOUBLE_V4 ) {
-        // The very top outer border line
-        top_horizontal = BDL_DH_H;
-        top_down = BDL_DH_DH;
-
-        // The very bottom outer border line
-        bottom_horizontal = BDL_DH_H;
-        bottom_up = BDL_DH_UH;
-        
-        // The four corners
-        top_left =      (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DL_DR : 
-                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_DR : top_horizontal;
-        top_right =     (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_DL : 
-                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_DL : top_horizontal;
-        bottom_left =   (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_UR : 
-                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_UR : bottom_horizontal;
-        bottom_right =  (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DL_UL : 
-                            style == TSTYLE_DOUBLE_V3 ? BDL_DH_UL : bottom_horizontal;        
-                
-        // The line below the header row, just before the data rows
-        // This is set to be the same as the border style
-        top_middle_left =  style==TSTYLE_DOUBLE_V2 ? BDL_DL_VR : 
-                            style==TSTYLE_DOUBLE_V3 ? BDL_DH_VR : top_horizontal;
-        top_middle_right = style==TSTYLE_DOUBLE_V2 ? BDL_DL_VL : 
-                            style==TSTYLE_DOUBLE_V3 ? BDL_DH_VL : top_horizontal;
-        top_middle_cross = BDL_DH_X;  
-        top_middle_horizontal = top_horizontal;
-                
-        // The vertical outer border
-        border_vertical =   (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DL_V : 
-                             style==TSTYLE_DOUBLE_V3 ? BDL_V : " ";
-        
-        // The interior horizontal line (also used for line below the title)
-        middle_horizontal = BDL_H;
-
-        // Interior vertical
-        middle_vertical = BDL_V ;               
-
-        // The connection to the lefty and right border for interior lines
-        middle_left = (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 ) ? BDL_DV_VR : 
-                        style == TSTYLE_DOUBLE_V3 ? BDL_VR : middle_horizontal;
-        middle_right = (style==TSTYLE_DOUBLE_V2 || style==TSTYLE_DOUBLE_V4 )  ? BDL_DV_VL : 
-                        style == TSTYLE_DOUBLE_V3 ? BDL_VL : middle_horizontal;
-
-        
-        // Connection for interior lines
-        middle_horizontal_up = BDL_UH;
-        middle_horizontal_down = BDL_DH;
-        middle_cross = BDL_X;
-        
-        if( style==TSTYLE_DOUBLE_V4 ) {
-            // Just a thick border around no special treatment of top row
-            top_middle_left = middle_left;  
-            top_middle_right = middle_right; 
-            top_middle_cross = middle_cross;
-            top_middle_horizontal = middle_horizontal;
-        }                
-
-    } else if( style==TSTYLE_SINGLE_V1 || style==TSTYLE_SINGLE_V2 ) {
-        
-        // The very top outer border line
-        top_horizontal = BDL_H;
-        top_down = BDL_DH;
-
-        // The very bottom outer border line
-        bottom_horizontal = top_horizontal;
-        bottom_up = BDL_UH;
-        
-        // The four corners
-        top_left =      style == TSTYLE_SINGLE_V2 ? BDL_DR : top_horizontal;
-        top_right =     style == TSTYLE_SINGLE_V2 ? BDL_DL : top_horizontal;
-        bottom_left =   style == TSTYLE_SINGLE_V2 ? BDL_UR : top_horizontal;
-        bottom_right =  style == TSTYLE_SINGLE_V2 ? BDL_UL : top_horizontal;
-                
-        // The line below the header row, just before the data rows
-        // This is set to be the same as the border style
-        top_middle_left =  style == TSTYLE_SINGLE_V2 ? BDL_VR : top_horizontal;
-        top_middle_right = style == TSTYLE_SINGLE_V2 ? BDL_VL : top_horizontal;
-        top_middle_cross = BDL_X;
-        top_middle_horizontal = top_horizontal;
-
-        // The vertical outer border
-        border_vertical = style == TSTYLE_SINGLE_V2 ? BDL_V : " "; 
-        
-        // The interior horizontal line (also used for line below the title)
-        middle_horizontal = BDL_H;
-
-        // Interior vertical
-        middle_vertical = BDL_V ;
-
-        // The connection to the lefty and right border for interior lines
-        middle_left  = style == TSTYLE_SINGLE_V2 ? BDL_VR : middle_horizontal;
-        middle_right = style == TSTYLE_SINGLE_V2 ? BDL_VL : middle_horizontal;
-
-        // Connection for interior lines
-        middle_horizontal_up = BDL_UH;
-        middle_horizontal_down = BDL_DH;
-        middle_cross = BDL_X;
-        
-} else if( style==TSTYLE_HEAVY_V1 || style==TSTYLE_HEAVY_V2 || style==TSTYLE_HEAVY_V3 ) {
-        
-        // The very top outer border line
-        top_horizontal = BDL_HB_H;
-        top_down = BDL_HB_DH;
-
-        // The very bottom outer border line
-        bottom_horizontal = top_horizontal;
-        bottom_up = BDL_HB_UH;
-        
-        // The four corners
-        top_left =      style == TSTYLE_HEAVY_V1 ? top_horizontal : BDL_HB_DR;
-        top_right =     style == TSTYLE_HEAVY_V1 ? top_horizontal : BDL_HB_DL;
-        bottom_left =   style == TSTYLE_HEAVY_V1 ? top_horizontal : BDL_HB_UR;
-        bottom_right =  style == TSTYLE_HEAVY_V1 ? top_horizontal : BDL_HB_UL;
-                
-        // The line below the header row, just before the data rows
-        // This is set to be the same as the border style
-        top_middle_left =  style == TSTYLE_HEAVY_V1 ? top_horizontal : style == TSTYLE_HEAVY_V2 ? BDL_HL_VR : BDL_HB_VR;
-        top_middle_right = style == TSTYLE_HEAVY_V1 ? top_horizontal : style == TSTYLE_HEAVY_V2 ? BDL_HL_VL : BDL_HB_VL;
-        top_middle_cross = style == TSTYLE_HEAVY_V3 ? BDL_X : BDL_HB_X ;
-        top_middle_horizontal = style == TSTYLE_HEAVY_V3 ? BDL_H : top_horizontal ;
-
-        // The vertical outer border
-        border_vertical = style == TSTYLE_HEAVY_V1 ? " " : BDL_HB_V ; 
-        
-        // The interior horizontal line (also used for line below the title)
-        middle_horizontal = BDL_H;
-
-        // Interior vertical
-        middle_vertical = BDL_V ;
-
-        // The connection to the lefty and right border for interior lines
-        middle_left  = style == TSTYLE_HEAVY_V1 ? middle_horizontal : BDL_HB_VR ;
-        middle_right = style == TSTYLE_HEAVY_V1 ? middle_horizontal : BDL_HB_VL ;
-
-        // Connection for interior lines
-        middle_horizontal_up = BDL_UH;
-        middle_horizontal_down = BDL_DH;
-        middle_cross = BDL_X;
-                        
-    } else if( style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 || 
-               style==TSTYLE_SIMPLE_V4 || style==TSTYLE_SIMPLE_V5 || style==TSTYLE_SIMPLE_V6 )  {
-        
-        if( style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 )
-            have_bottom_border = FALSE;
-        
-        top_left = " ";
-        top_horizontal = " ";
-        top_down = " ";
-        top_right = " ";
-        top_middle_left = " ";
-        top_middle_right = " ";
-        top_middle_cross = style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V5 ? BDL_HB_X : style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V4 ? BDL_X : BDL_DH_X;;
-        top_middle_horizontal = style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V5 ? BDL_HB_H : style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V4 ? BDL_H : BDL_DL_H;
-        middle_left = " ";
-        middle_horizontal = " ";
-        middle_right = " ";
-        middle_horizontal_up = " ";
-        middle_horizontal_down = " ";
-        middle_cross = " ";
-        middle_vertical = BDL_V;
-        border_vertical = " ";
-        bottom_left = " ";
-        bottom_horizontal = style==TSTYLE_SIMPLE_V4 || style==TSTYLE_SIMPLE_V5 || style==TSTYLE_SIMPLE_V6 ?  BDL_H : " ";
-        bottom_right = " ";
-        bottom_up = style==TSTYLE_SIMPLE_V1 || style==TSTYLE_SIMPLE_V2 || style==TSTYLE_SIMPLE_V3 ? BDL_V : BDL_UH;
-        
-    }
-    
-    if( ! t->interior_v ) {
-        top_down = top_horizontal;
-        top_middle_cross = top_middle_horizontal;
-        bottom_up = bottom_horizontal;                
-        middle_vertical = " ";        
-        middle_horizontal_up = middle_horizontal;
-        middle_horizontal_down = middle_horizontal;
-        middle_cross = middle_horizontal;   
-    }
-
     char pbuff[MAXPBUFF];
     *buff = '\0';
     memset(eval, 0, sizeof (int)*totwidth);
     int buffleft=bufflen;
-    int len=snprintf(pbuff, MAXPBUFF, "%s", top_left);
+    int len=snprintf(pbuff, MAXPBUFF, "%s", sd.top_left);
     xstrlcat(buff,pbuff,buffleft);
     buffleft -= len;
     if(buffleft < 1) return -1;
     
     if (t->title)
-        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, top_horizontal, NULL, NULL, NULL);
+        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.top_horizontal, NULL, NULL, NULL);
     else {
         _utable_mark_verticals(t, eval, 1, 0);
-        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, top_horizontal, top_down, NULL, NULL);
+        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.top_horizontal, sd.top_down, NULL, NULL);
     }
     if(buffleft < 1) return -1;
     
-    len=snprintf(pbuff, MAXPBUFF, "%s\n", top_right);
+    len=snprintf(pbuff, MAXPBUFF, "%s\n", sd.top_right);
     xstrlcat(buff,pbuff,buffleft);
     buffleft -= len;
     if(buffleft < 1) return -1;
 
     for (size_t r = 0; r < t->nRow; r++) {
-        _utable_draw_cellcontent_row(buff, &buffleft, t, r, border_vertical, border_vertical, middle_vertical);
+        _utable_draw_cellcontent_row(buff, &buffleft, t, r, sd.border_vertical, sd.border_vertical, sd.middle_vertical);
         if(buffleft < 1) return -1;
         
         memset(eval, 0, sizeof (int)*totwidth);
@@ -1472,15 +1468,15 @@ utable_strstroke(table_t *t, char *buff, size_t bufflen, tblstyle_t style) {
         
         if ( t->headerLine && ( (r == 0 && !t->title) || (r == 1 && t->title) ) ) {
             // The heavier line just beneath the header row before the data rows
-            len=snprintf(pbuff, MAXPBUFF, "%s", top_middle_left);
+            len=snprintf(pbuff, MAXPBUFF, "%s", sd.top_middle_left);
             xstrlcat(buff,pbuff,buffleft);
             buffleft -= len;
             if(buffleft < 1) return -1;
             
-            _utable_stroke_verticals(buff, &buffleft, totwidth, eval, top_middle_horizontal, NULL, NULL, top_middle_cross);
+            _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.top_middle_horizontal, NULL, NULL, sd.top_middle_cross);
             if(buffleft < 1) return -1;
             
-            len=snprintf(pbuff, MAXPBUFF, "%s\n", top_middle_right);
+            len=snprintf(pbuff, MAXPBUFF, "%s\n", sd.top_middle_right);
             xstrlcat(buff,pbuff,buffleft);
             buffleft -= len;
             
@@ -1490,15 +1486,15 @@ utable_strstroke(table_t *t, char *buff, size_t bufflen, tblstyle_t style) {
         } else if (r == 0 && t->title) {
             if (t->titleStyle == TITLESTYLE_LINE) {
                 // The optional thin line beneath the title
-                len=snprintf(pbuff, MAXPBUFF, "%s", middle_left);
+                len=snprintf(pbuff, MAXPBUFF, "%s", sd.middle_left);
                 xstrlcat(buff,pbuff,buffleft);
                 buffleft -= len;
                 if(buffleft < 1) return -1;
                 
-                _utable_stroke_verticals(buff, &buffleft, totwidth, eval, middle_horizontal, middle_horizontal_down, middle_horizontal_up, middle_cross);
+                _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.middle_horizontal, sd.middle_horizontal_down, sd.middle_horizontal_up, sd.middle_cross);
                 if(buffleft < 1) return -1;
                 
-                len=snprintf(pbuff, MAXPBUFF, "%s\n", middle_right);
+                len=snprintf(pbuff, MAXPBUFF, "%s\n", sd.middle_right);
                 xstrlcat(buff,pbuff,buffleft);
                 buffleft -= len;
                 if(buffleft < 1) return -1;
@@ -1507,15 +1503,15 @@ utable_strstroke(table_t *t, char *buff, size_t bufflen, tblstyle_t style) {
         } else if (t->interior_h) {
             // Add lines between each data row
             if (r < t->nRow - 1) {
-                len=snprintf(pbuff, MAXPBUFF, "%s", middle_left);
+                len=snprintf(pbuff, MAXPBUFF, "%s", sd.middle_left);
                 xstrlcat(buff,pbuff,buffleft);
                 buffleft -= len;
                 if(buffleft < 1) return -1;
                 
-                _utable_stroke_verticals(buff, &buffleft, totwidth, eval, middle_horizontal, middle_horizontal_down, middle_horizontal_up, middle_cross);
+                _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.middle_horizontal, sd.middle_horizontal_down, sd.middle_horizontal_up, sd.middle_cross);
                 if(buffleft < 1) return -1;
                 
-                len=snprintf(pbuff, MAXPBUFF, "%s\n", middle_right);
+                len=snprintf(pbuff, MAXPBUFF, "%s\n", sd.middle_right);
                 xstrlcat(buff,pbuff,buffleft);
                 buffleft -= len;
                 if(buffleft < 1) return -1;
@@ -1524,20 +1520,21 @@ utable_strstroke(table_t *t, char *buff, size_t bufflen, tblstyle_t style) {
         }
     }
     
-    if( have_bottom_border ) {
-        len=snprintf(pbuff, MAXPBUFF, "%s", bottom_left);
+    if( sd.have_bottom_border ) {
+        len=snprintf(pbuff, MAXPBUFF, "%s", sd.bottom_left);
         xstrlcat(buff,pbuff,buffleft);
         buffleft -= len;
         if(buffleft < 1) return -1;
 
-        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, bottom_horizontal, bottom_up, bottom_up, NULL);
-        len=snprintf(pbuff, MAXPBUFF, "%s\n", bottom_right);
+        _utable_stroke_verticals(buff, &buffleft, totwidth, eval, sd.bottom_horizontal, sd.bottom_up, sd.bottom_up, NULL);
+        len=snprintf(pbuff, MAXPBUFF, "%s\n", sd.bottom_right);
         xstrlcat(buff,pbuff,buffleft);
         buffleft -= (len+1);
         if(buffleft < 1) return -1;
     }
 
     return 0;
+    
 }
 
 #pragma GCC diagnostic pop

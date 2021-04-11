@@ -41,7 +41,8 @@ DISTCLEANFILES=config.h
 
 CLEANFILES=*~ test_table 
 
-unit-test: test_table
+unit-test:
+	make
 	@echo " "
 	@echo "Unit tests:"
 	@echo "============================="
