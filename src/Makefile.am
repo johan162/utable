@@ -34,20 +34,17 @@ if is_osx
     test_table_LDADD += /usr/lib/libiconv.2.dylib
 endif
 
-
-
-# Include the mail templates in the tar ball as well
 DISTCLEANFILES=config.h
 
 CLEANFILES=*~ test_table 
 
 unit-test:
-	make
-	@echo " "
-	@echo "Unit tests:"
-	@echo "============================="
-	@(cd test && ./ut.sh)
-	@echo ""
+make
+@echo " "
+@echo "Unit tests:"
+@echo "============================="
+@(cd test && ./ut.sh)
+@echo ""
 
 .PHONY: unit-test
 
