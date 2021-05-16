@@ -318,9 +318,8 @@ _utable_rc_chk(table_t *t, size_t row, size_t col) {
  * @param t Table pointer
  * @param row Row of cell
  * @param col Column of cell
- * @return 0 on success, -1 on failure
- */
-static int
+  */
+static void
 _utable_init_cell(table_t *t, size_t row, size_t col) {
   tcell_t *c = &t->c[TIDX(row, col)];
   c->t = NULL;
@@ -330,7 +329,6 @@ _utable_init_cell(table_t *t, size_t row, size_t col) {
   c->merged = FALSE;
   c->cspan = 1;
   c->rspan = 1;
-  return 0;
 }
 
 /**
@@ -359,9 +357,7 @@ utable_create(size_t nRow, size_t nCol) {
 
   for (size_t r = 0; r < nRow; r++) {
     for (size_t c = 0; c < nCol; c++) {
-      if (_utable_init_cell(t, r, c)) {
-	goto tbl_err;
-      }
+      _utable_init_cell(t, r, c);
     }
   }
 
