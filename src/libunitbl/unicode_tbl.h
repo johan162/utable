@@ -31,8 +31,9 @@ extern "C" {
 
 #define FALSE 0
 #define TRUE 1
- 
   
+#include "styles.h"
+
 /**
  * Possible horizontal alignment for cell conetnt
  */
@@ -42,45 +43,6 @@ typedef enum {
     CENTERALIGN  /**< Center alignment in cell */
 } halign_t;
 
-/**
- * Possible table styles
- */
-typedef enum {
-    /* Almost no border */
-    TSTYLE_SIMPLE_V1,       /**< A simple single horizontal line under the header */
-    TSTYLE_SIMPLE_V2,       /**< A simple double horizontal line under the header */
-    TSTYLE_SIMPLE_V3,       /**< A simple bold horizontal line under the header */      
-    TSTYLE_SIMPLE_V4,       /**< A simple single horizontal line under the header, and single line at table bottom */
-    TSTYLE_SIMPLE_V5,       /**< A simple double horizontal line under the header, and single line at and table bottom */
-    TSTYLE_SIMPLE_V6,       /**< A simple bold horizontal line under the header, and single line at and table bottom */      
-            
-
-    /* ASCII Styles */
-    TSTYLE_ASCII_V0,    /**< Plain ASCII only one horizontal double line under header row */            
-    TSTYLE_ASCII_V4,   /**< Plain ASCII one horizontal double line under header row, single bottom line */              
-    TSTYLE_ASCII_V1,    /**< Plain ASCII only horizontal lines, double lines top and bottom */
-    TSTYLE_ASCII_V2,    /**< Plain ASCII with border, double lines top and bottom */
-    TSTYLE_ASCII_V3,    /**< Plain ASCII with border, only single lines */ 
-
-    /* Unicode box style using double lines */
-    TSTYLE_DOUBLE_V1,   /**< Double horizontal box, no vertical border */          
-    TSTYLE_DOUBLE_V2,   /**< Double box */            
-    TSTYLE_DOUBLE_V3,   /**< Double horizontal, single vertical box */
-    TSTYLE_DOUBLE_V4,   /**< Double horizontal, no special header line */
-
-    /* Unicode box style using single lines*/
-    TSTYLE_SINGLE_V1,   /**< Single horizontal */
-    TSTYLE_SINGLE_V2,   /**< Single box */
-
-    /* Unicode box style using heavy lines **/
-    TSTYLE_HEAVY_V1,    /**< Heavy horizontal, no vertical border */
-    TSTYLE_HEAVY_V2,    /**< Full heavy border */
-    TSTYLE_HEAVY_V3     /**< Heavy border,no header */
-} tblstyle_t;
-
-extern tblstyle_t table_styles[];
-
-#define NBR_TSTYLES 20
 
 /**
  * Buffer allocated when we stroke a table. This effectively limits the size of the
@@ -88,29 +50,7 @@ extern tblstyle_t table_styles[];
  */
 #define MAXSTROKEBUFF (1024*1024*10)
 
-/**
- *
- */
-typedef struct {
-  char *top_horizontal;
-  char *top_left, *top_right;
-  char *top_down;
-  char *top_middle_left, *top_middle_cross;
-  char *top_middle_horizontal;
-  char *top_middle_right;    
-  char *middle_left;    
-  char *middle_horizontal;
-  char *middle_right;
-  char *middle_horizontal_up;
-  char *middle_horizontal_down;
-  char *middle_cross;
-  char *middle_vertical;
-  char *border_vertical;
-  char *bottom_horizontal;
-  char *bottom_left, *bottom_right, *bottom_up;
-  int have_bottom_border;
-} style_t;
-  
+
 /**
  * Table title line style  
  */

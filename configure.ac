@@ -2,7 +2,7 @@
 # Autoconf script for the g7ctrl daemon
 # Use autoreconf to rebuild the build environment
 # ===============================================================================
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 AC_INIT([unitable],[1.0.0],[johan162@gmail.com])
 AC_COPYRIGHT([Part of configure script Copyright Johan Persson 2021 (johan162@gmail.com)])
 AC_PREFIX_DEFAULT(/usr)
@@ -11,8 +11,8 @@ AM_INIT_AUTOMAKE([dist-xz silent-rules])
 AM_SILENT_RULES
 AM_PROG_AR
 AC_PROG_LN_S
-AC_PROG_CC_C99
-AC_CONFIG_HEADER([src/config.h])
+AC_PROG_CC
+AC_CONFIG_HEADERS([src/config.h])
 
 
 AC_CONFIG_FILES([
@@ -90,7 +90,6 @@ AM_CONDITIONAL(has_opt_readline, test -d /usr/local/opt/readline)
 # ===============================================================================
 # Standard checks for headers and C-compiler
 # ===============================================================================
-AC_LANG_C
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 

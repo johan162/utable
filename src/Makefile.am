@@ -16,9 +16,8 @@ if DISABLE_PIE
     AM_CFLAGS += -fno-pie -no-pie
 endif
 
-# For development builds, as indicated by the stack trace flag, we want two
-# additional features:
-# 1) We need to include all symbols for the back trace to give proper function names
+# For development builds, as indicated by the stack trace flag
+# We need to include all symbols for the back trace to get proper function names
 if STACKTRACE
     AM_CFLAGS += -rdynamic
 endif
@@ -31,7 +30,8 @@ test_table_DEPENDENCIES= libunitbl/libunitbl.a
 
 # In Linux iconv() exists in glibc but in OSX we must add the iconv.dylib library to get that function
 if is_osx
-    test_table_LDADD += /usr/lib/libiconv.2.dylib
+#    test_table_LDADD += /usr/lib/libiconv.2.dylib
+    test_table_LDFLAGS = "-L/usr/local/opt/libiconv/lib"
 endif
 
 DISTCLEANFILES=config.h
@@ -39,12 +39,12 @@ DISTCLEANFILES=config.h
 CLEANFILES=*~ test_table 
 
 unit-test:
-make
-@echo " "
-@echo "Unit tests:"
-@echo "============================="
-@(cd test && ./ut.sh)
-@echo ""
+	make
+	@echo " "
+	@echo "Unit tests:"
+	@echo "============================="
+	@(cd test && ./ut.sh)
+	@echo ""
 
 .PHONY: unit-test
 
